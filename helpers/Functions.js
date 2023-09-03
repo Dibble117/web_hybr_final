@@ -1,3 +1,5 @@
+
+// Message timestamp in chat
 export const convertFirebaseTimeStampToJS = (time) => {
     if (time !== null && time !== undefined) {
         const fireBaseTime = new Date(
@@ -9,6 +11,6 @@ export const convertFirebaseTimeStampToJS = (time) => {
             fireBaseTime.getFullYear() + ' ' +
             fireBaseTime.getHours() + ':' +
             String(fireBaseTime.getMinutes()).padStart(2, '0')/* + ':' +
-            String(fireBaseTime.getSeconds()).padStart(2, '0'); */      //Sekunnit poistettu, näyttää paremmalta
+            String(fireBaseTime.getSeconds()).padStart(2, '0'); */      // Seconds not needed
         }
     }

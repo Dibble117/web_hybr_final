@@ -10,17 +10,6 @@ export default function HomeScreen({ navigation}) {
             headerStyle: {
                 backgroundColor: "#f0f0f0",
             },
-                headerRight: () => (
-                    <View style={styles.headerRightContainer}>
-                    <Text style={styles.navButtonText}>To Messages</Text>
-                    <AntDesign
-                    style={styles.navButton}
-                    name="arrowright"
-                    size={24}
-                    onPress={() => navigation.navigate("Second", { message: message })}
-                    />
-                    </View>
-            )
         })
     }, [message]);
     return (
@@ -30,8 +19,6 @@ export default function HomeScreen({ navigation}) {
         </View>
     );
 }
-
-
 
 const styles = StyleSheet.create({
     container: {

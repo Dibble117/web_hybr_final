@@ -2,7 +2,8 @@ import React, { useEffect, useState } from "react";
 import { BackHandler, FlatList, StyleSheet, Text, TextInput, View, TouchableOpacity } from "react-native";
 import { getFirestore, collection, query, onSnapshot, orderBy, addDoc } from 'firebase/firestore';
 import { FontAwesome } from '@expo/vector-icons';
-import { convertFirebaseTimeStampToJS } from './helpers/Functions';
+import { convertFirebaseTimeStampToJS } from '../helpers/Functions';
+import HomeScreen from "./HomeScreen";
 
 export default function SecondScreen({ navigation }) {
   const [messages, setMessages] = useState([]);
@@ -31,9 +32,8 @@ export default function SecondScreen({ navigation }) {
       }
     });
 
-    // Add back button functionality
     BackHandler.addEventListener("hardwareBackPress", close);
-    
+
     return () => {
       BackHandler.removeEventListener("hardwareBackPress", close);
       unsubscribe();
@@ -60,7 +60,7 @@ export default function SecondScreen({ navigation }) {
   };
 
   function close() {
-    navigation.goBack(null);
+    navigation.navigate('Home');
     return true;
   }
 
@@ -100,6 +100,7 @@ export default function SecondScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "#fff",
     padding: 10,
   },
   messageContainer: {
