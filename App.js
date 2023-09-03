@@ -44,7 +44,7 @@ export default function App() {
         tabBarOptions={{
           activeTintColor: 'blue',
           inactiveTintColor: 'gray',
-          labelStyle: { fontSize: 16, fontWeight: 'bold' },
+          labelStyle: { fontSize: 13, fontWeight: 'bold' },
           style: { backgroundColor: '#f0f0f0' },
           indicatorStyle: { backgroundColor: '#007AFF' },
         }}
