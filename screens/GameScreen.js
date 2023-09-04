@@ -1,7 +1,8 @@
 import React, { Component, useState, useEffect } from 'react';
 import { Accelerometer } from 'expo-sensors';
-import { Alert, StyleSheet, View, Dimensions, DeviceEventEmitter, Text, BackHandler } from 'react-native';
+import { Alert, StyleSheet, View, Dimensions, DeviceEventEmitter, Text, BackHandler, TouchableOpacity } from 'react-native';
 import { NavigationEvents } from 'react-navigation';
+import { AsyncStorage } from '@react-native-async-storage/async-storage';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const blockSize = 30; // Size of each maze cell in pixels
@@ -29,28 +30,27 @@ class MazeScreen extends Component {
         ballSpeedY: 0, // Ball speed in the y-axis
         finishLine: finishLine, // Finish line coordinates
         timer: 0, // Timer in seconds
+        formattedTimer: '00:00',
         deadEndWhiteBlock: deadEndWhiteBlock,
-        gameInProgress: true, // Add this line
+        gameInProgress: false, // Add this line
         gameCompleted: false, // Add this line
       };
       this.accelerometerData = { x: 0, y: 0 };
     }
-  
+    
     componentDidMount() {
-        // Start listening to accelerometer events
-        this.showAlert();
-        this.accelerometerSubscription = Accelerometer.addListener(this.handleAccelerometerData);
-        this.animationFrameId = requestAnimationFrame(this.updateGame);
-        this.backHandler = BackHandler.addEventListener('hardwareBackPress', this.handleBackPress);
-      }
+      // Add the BackHandler event listener here
+  //    this.backHandler = BackHandler.addEventListener('hardwareBackPress', this.handleBackPress);
+    }
+    
     
       componentWillUnmount() {
         // Stop listening to accelerometer events
-        this.accelerometerSubscription.remove();
+    //    this.accelerometerSubscription.remove();
         // Stop the timer
-        clearInterval(this.timerInterval);
-        cancelAnimationFrame(this.animationFrameId);
-        this.backHandler.remove();
+    //    clearInterval(this.timerInterval);
+    //    cancelAnimationFrame(this.animationFrameId);
+    //    this.backHandler.remove();
       }
 
       // Handle back button press
@@ -67,6 +67,10 @@ class MazeScreen extends Component {
         {
           text: 'Exit',
           onPress: () => {
+            // Stop the timer
+            clearInterval(this.timerInterval);
+            // Set the game as completed and not in progress
+            this.setState({ gameCompleted: true, gameInProgress: false });
             // Handle the exit action here, e.g., navigate to another screen
             this.props.navigation.navigate('Home');
           },
@@ -88,10 +92,23 @@ class MazeScreen extends Component {
           onPress: () => {
             // Start the timer when OK is clicked
             this.timerInterval = setInterval(this.updateTimer, 1000); // Update timer every second
+            this.setState({
+              gameInProgress: true,
+              gameCompleted: false,
+              timer: 0,
+              ballPosition: this.findInitialBallPosition(this.state.maze),
+              ballSpeedX: 0,
+              ballSpeedY: 0,
+            });
+            
+              this.accelerometerSubscription = Accelerometer.addListener(this.handleAccelerometerData);
+              this.animationFrameId = requestAnimationFrame(this.updateGame);
+              this.backHandler = BackHandler.addEventListener('hardwareBackPress', this.handleBackPress);
+            
           },
         },
       ],
-      { cancelable: false }
+      { cancelable: true }
     );
   };
 
@@ -146,6 +163,8 @@ handleAccelerometerData = (data) => {
     // Adjust the sensitivity factor as needed
     const sensitivityFactor = 20; // You can fine-tune this value
 
+
+    if (Math.abs(x) < 10 && Math.abs(y) < 10) {
     // Calculate the change in position based on accelerometer data
     const deltaX = x * sensitivityFactor;
     const deltaY = y * sensitivityFactor;
@@ -169,13 +188,20 @@ handleAccelerometerData = (data) => {
       this.setState({ ballPosition: { x: newX, y: newY} });
     }
   }
+  }
   };
 
       // Update the timer
-  updateTimer = () => {
-    const { timer } = this.state;
-    this.setState({ timer: timer + 1 });
-  };
+updateTimer = () => {
+  const { timer } = this.state;
+  const minutes = Math.floor(timer / 60); // Calculate minutes
+  const seconds = timer % 60; // Calculate seconds
+
+  // Format the timer value as "MM:SS"
+  const formattedTimer = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+  this.setState({ timer: timer + 1, formattedTimer }); // Update the formatted timer
+};
 
   // Update the game state
 updateGame = () => {
@@ -187,6 +213,7 @@ updateGame = () => {
     gameInProgress,
     ballSpeedX,
     ballSpeedY,
+    formattedTimer,
   } = this.state;
 
   // Check if the game is already completed or not in progress
@@ -223,20 +250,33 @@ updateGame = () => {
     // Set the game as completed and not in progress
     this.setState({ gameCompleted: true, gameInProgress: false });
 
-    // Show an alert message with the timer value
-    Alert.alert(
-      'Congratulations!',
-      `You completed the maze in ${timer} seconds.`,
-      [
-        {
-          text: 'OK',
-          onPress: () => {
-            // Handle the alert OK button press
-          },
+    // Calculate minutes and seconds
+  const minutes = Math.floor(timer / 60);
+  const seconds = timer % 60;
+
+  let message = `You completed the maze in `;
+  if (minutes > 0) {
+    message += `${minutes} ${minutes === 1 ? 'minute' : 'minutes'}`;
+  }
+  if (seconds > 0) {
+    message += `${minutes > 0 ? ' and ' : ''}${seconds} ${seconds === 1 ? 'second' : 'seconds'}`;
+  }
+
+  Alert.alert(
+    'Congratulations!',
+    message,
+    [
+      {
+        text: 'OK',
+        onPress: () => {
+          // Handle the alert OK button press
+          this.saveGameTime(formattedTimer);
         },
-      ],
-      { cancelable: false }
-    );
+      },
+    ],
+    this.ballPosition = this.findInitialBallPosition(this.state.maze),
+    { cancelable: false }
+  );
 
     // Cancel the animation frame to stop the ball from moving
     cancelAnimationFrame(this.animationFrameId);
@@ -244,6 +284,15 @@ updateGame = () => {
 
   // Request the next animation frame
   this.animationFrameId = requestAnimationFrame(this.updateGame);
+};
+
+// Function to save the game time
+saveGameTime = async (time) => {
+  try {
+    await AsyncStorage.setItem('gameTime', time.toString());
+  } catch (error) {
+    console.error('Error saving game time:', error);
+  }
 };
 
 
@@ -352,7 +401,7 @@ updateGame = () => {
   }
 
   render() {
-    const { maze, ballPosition } = this.state;
+    const { maze, ballPosition, gameInProgress, formattedTimer } = this.state;
 
     return (
       <View style={styles.container}>
@@ -389,11 +438,23 @@ updateGame = () => {
           ]}
         />
 
-        {/* Render the timer at the bottom */}
-        <View style={styles.timerContainer}>
-            <Text style={styles.timerText}>Timer: {this.state.timer} seconds</Text>
+<View style={styles.timerContainer}>
+        {gameInProgress ? (
+          <Text style={styles.timerText}>Time: {formattedTimer}</Text>
+        
+      ) : (
+        <View style={styles.startButtonContainer}>
+          <TouchableOpacity
+          style={styles.startButton}
+          onPress={this.showAlert}
+
+          >
+        <Text style={styles.startButtonText}>Start Game</Text>
+          </TouchableOpacity>
         </View>
-      </View>
+      )}
+    </View>
+    </View>
     );
   }
 }
@@ -445,6 +506,16 @@ const styles = StyleSheet.create({
         backgroundColor: 'green', // Change this to 'green' to make the finish line green
         borderColor: 'red', // Add a red border to the finish line cell
         borderWidth: 2, // Adjust the border width as needed
+      },
+      startButton: {
+        backgroundColor: 'blue', // Background color of the button
+        padding: 10, // Padding around the button text
+        borderRadius: 8, // Border radius to make it rounded
+      },
+      startButtonText: {
+        color: 'white', // Text color of the button
+        fontSize: 18, // Font size of the button text
+        fontWeight: 'bold', // Font weight of the button text
       },
 });
 
