@@ -25,6 +25,8 @@ class MazeScreen extends Component {
       this.state = {
         maze: maze,
         ballPosition: ballPosition, // Initial ball position
+        ballSpeedX: 0, // Ball speed in the x-axis
+        ballSpeedY: 0, // Ball speed in the y-axis
         finishLine: finishLine, // Finish line coordinates
         timer: 0, // Timer in seconds
         deadEndWhiteBlock: deadEndWhiteBlock,
@@ -93,32 +95,6 @@ class MazeScreen extends Component {
     );
   };
 
-  // Handle accelerometer data to move the ball
-  handleAccelerometerData = (data) => {
-    const { ballPosition, gameInProgress } = this.state;
-    const { x, y } = data;
-  
-    // Check if the game is in progress before updating the ball's position
-    if (gameInProgress) {
-      // Calculate the new position of the ball based on accelerometer data
-      const sensitivityFactor = 10;
-      const newX = ballPosition.x - x * sensitivityFactor; // Adjust sensitivity
-      const newY = ballPosition.y + y * sensitivityFactor; // Adjust sensitivity
-  
-      // Check if the new position is within the bounds of the maze and does not collide with a black block
-      if (
-        newX >= 10 && // Ensure the ball stays within the left boundary
-        newX <= numCols * blockSize - 10 && // Ensure the ball stays within the right boundary
-        newY >= 10 && // Ensure the ball stays within the top boundary
-        newY <= numRows * blockSize - 10 && // Ensure the ball stays within the bottom boundary
-        !this.checkCollision(newX, newY)
-      ) {
-        this.setState({ ballPosition: { x: newX, y: newY } });
-      }
-    }
-  };
-  
-
   checkCollision(newX, newY) {
     const { maze } = this.state;
     const ballRadius = 5; // Radius of the ball (half of its width)
@@ -162,27 +138,38 @@ class MazeScreen extends Component {
   }
 
     // Handle accelerometer data to move the ball
-    handleAccelerometerData = (data) => {
-      const { ballPosition } = this.state;
-      const { x, y } = data;
-    //  console.log('Accelerometer Data:', data);
-  
-      // Calculate the new position of the ball based on accelerometer data
-      const sensitivityFactor = 50;
-      const newX = ballPosition.x - x * sensitivityFactor; // Adjust sensitivity
-      const newY = ballPosition.y + y * sensitivityFactor; // Adjust sensitivity
-  
-      // Check if the new position is within the bounds of the maze
-      if (
-        newX >= 10 && // Ensure the ball stays within the left boundary
-        newX <= numCols * blockSize - 10 && // Ensure the ball stays within the right boundary
-        newY >= 10 && // Ensure the ball stays within the top boundary
-        newY <= numRows * blockSize - 10 && // Ensure the ball stays within the bottom boundary
-        !this.checkCollision(newX, newY)
-      ) {
-        this.setState({ ballPosition: { x: newX, y: newY } });
-      }
-    };
+handleAccelerometerData = (data) => {
+  const { ballPosition, gameInProgress } = this.state;
+  const { x, y } = data;
+
+  if (gameInProgress) {
+    // Adjust the sensitivity factor as needed
+    const sensitivityFactor = 20; // You can fine-tune this value
+
+    // Calculate the change in position based on accelerometer data
+    const deltaX = x * sensitivityFactor;
+    const deltaY = y * sensitivityFactor;
+
+    // Calculate the new position of the ball by gradually adjusting its position
+    let newX = ballPosition.x - deltaX;
+    let newY = ballPosition.y + deltaY;
+
+    // Define a minimum distance from walls to prevent sticking
+    const wallDistance = 15; // You can adjust this value
+
+    if (
+      newX >= 10 + wallDistance && // Ensure the ball stays within the left boundary
+      newX <= numCols * blockSize - 10 - wallDistance && // Ensure the ball stays within the right boundary
+      newY >= 10 + wallDistance && // Ensure the ball stays within the top boundary
+      newY <= numRows * blockSize - 10 - wallDistance && // Ensure the ball stays within the bottom boundary
+      !this.checkCollision(newX, newY)
+    ) {
+      newX = Math.max(10 + wallDistance, Math.min(newX, numCols * blockSize - 10 - wallDistance));
+      newY = Math.max(10 + wallDistance, Math.min(newY, numRows * blockSize - 10 - wallDistance));
+      this.setState({ ballPosition: { x: newX, y: newY} });
+    }
+  }
+  };
 
       // Update the timer
   updateTimer = () => {
@@ -191,62 +178,74 @@ class MazeScreen extends Component {
   };
 
   // Update the game state
-  updateGame = () => {
-    const { ballPosition, finishLine, timer, gameCompleted, gameInProgress } = this.state;
-    const { x, y } = this.accelerometerData;
+updateGame = () => {
+  const {
+    ballPosition,
+    finishLine,
+    timer,
+    gameCompleted,
+    gameInProgress,
+    ballSpeedX,
+    ballSpeedY,
+  } = this.state;
 
-    // Check if the game is already completed or not in progress
-    if (gameCompleted || !gameInProgress) {
+  // Check if the game is already completed or not in progress
+  if (gameCompleted || !gameInProgress) {
     return; // Don't update the game if it's completed or not in progress
-    }
+  }
 
-    // Calculate the new position of the ball based on accelerometer data
-    const sensitivityFactor = 50;
-    const newX = ballPosition.x - x * sensitivityFactor; // Adjust sensitivity
-    const newY = ballPosition.y + y * sensitivityFactor; // Adjust sensitivity
+  // Calculate the new position of the ball based on its speed and direction
+  const newX = ballPosition.x + ballSpeedX;
+  const newY = ballPosition.y + ballSpeedY;
 
-    // Check if the new position is within the bounds of the maze and does not collide with a black block
-    if (
-      newX >= 10 && // Ensure the ball stays within the left boundary
-      newX <= numCols * blockSize - 10 && // Ensure the ball stays within the right boundary
-      newY >= 10 && // Ensure the ball stays within the top boundary
-      newY <= numRows * blockSize - 10 && // Ensure the ball stays within the bottom boundary
-      !this.checkCollision(newX, newY)
-    ) {
-      this.setState({ ballPosition: { x: newX, y: newY } });
+  // Define a minimum distance from walls to prevent sticking during movement
+  const wallDistance = 5; // You can adjust this value
 
-      // Check if the ball has reached the finish line
-    if (
-      Math.abs(newX - finishLine.x * blockSize) <= blockSize / 2 &&
-      Math.abs(newY - finishLine.y * blockSize) <= blockSize / 2
-    ) {
-      // Stop the timer
-      clearInterval(this.timerInterval);
+  // Check if the new position is within the bounds of the maze
+  if (
+    newX >= 10 + wallDistance && // Ensure the ball stays within the left boundary
+    newX <= gridWidth - 10 - wallDistance && // Ensure the ball stays within the right boundary
+    newY >= 10 + wallDistance && // Ensure the ball stays within the top boundary
+    newY <= screenHeight - timerHeight - 10 - wallDistance && // Ensure the ball stays within the bottom boundary
+    !this.checkCollision(newX, newY)
+  ) {
+    this.setState({ ballPosition: { x: newX, y: newY } });
+  }
 
-      // Set the game as completed and not in progress
-      this.setState({ gameCompleted: true, gameInProgress: false });
+  // Check if the ball has reached the finish line
+  if (
+    Math.abs(newX - finishLine.x * blockSize) <= blockSize / 2 &&
+    Math.abs(newY - finishLine.y * blockSize) <= blockSize / 2
+  ) {
+    // Stop the timer
+    clearInterval(this.timerInterval);
 
-      // Show an alert message with the timer value
-      Alert.alert(
-        'Congratulations!',
-        `You completed the maze in ${timer} seconds.`,
-        [
-          {
-            text: 'OK',
-            onPress: () => {
-              // Handle the alert OK button press
-            },
+    // Set the game as completed and not in progress
+    this.setState({ gameCompleted: true, gameInProgress: false });
+
+    // Show an alert message with the timer value
+    Alert.alert(
+      'Congratulations!',
+      `You completed the maze in ${timer} seconds.`,
+      [
+        {
+          text: 'OK',
+          onPress: () => {
+            // Handle the alert OK button press
           },
-        ],
-        { cancelable: false }
-      );
-      // Cancel the animation frame to stop the ball from moving
+        },
+      ],
+      { cancelable: false }
+    );
+
+    // Cancel the animation frame to stop the ball from moving
     cancelAnimationFrame(this.animationFrameId);
-    }
-    }
-    // Request the next animation frame
-    this.animationFrameId = requestAnimationFrame(this.updateGame);
-  };
+  }
+
+  // Request the next animation frame
+  this.animationFrameId = requestAnimationFrame(this.updateGame);
+};
+
 
   generateMaze(rows, cols) {
     // Create an empty maze grid filled with walls
