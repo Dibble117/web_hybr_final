@@ -2,6 +2,7 @@ import React, { Component, useState, useEffect } from 'react';
 import { Accelerometer } from 'expo-sensors';
 import { Alert, StyleSheet, View, Dimensions, DeviceEventEmitter, Text, BackHandler, TouchableOpacity, Modal, FlatList } from 'react-native';
 import { NavigationEvents } from 'react-navigation';
+import { withNavigation } from 'react-navigation';
 import  AsyncStorage  from '@react-native-async-storage/async-storage';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
@@ -42,6 +43,12 @@ class MazeScreen extends Component {
       };
       this.accelerometerData = { x: 0, y: 0 };
     }
+/*
+    reloadGameScreen = () => {
+      // Navigate back to the GameScreen (replace 'GameScreen' with your screen name)
+      this.props.navigation.navigate('Game');
+    };
+*/
 /*
     saveGameTime = async (formattedTimer) => {
       try {
@@ -373,10 +380,11 @@ updateGame = () => {
 
     // Set the game as completed and not in progress
     this.setState({ gameCompleted: true, gameInProgress: false });
+    this.saveGameTime(this.state.formattedTimer);
 
     // Calculate minutes and seconds
   const minutes = Math.floor(timer / 60);
-  const seconds = timer % 60;
+  const seconds = (timer % 60) - 1;
 
   let message = `You completed the maze in `;
   if (minutes > 0) {
@@ -394,8 +402,10 @@ updateGame = () => {
         text: 'OK',
         onPress: () => {
           // Handle the alert OK button press
-          this.saveGameTime(this.state.formattedTimer);
-       //   this.retrieveGameTimes();
+       //   this.saveGameTime(this.state.formattedTimer);
+          this.retrieveGameTimes();
+        //  this.props.navigation.navigate('Game'); // Call the function to reload GameScreen
+        //  this.retrieveGameTimes();
         },
       },
     ],
