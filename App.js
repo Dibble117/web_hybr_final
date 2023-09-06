@@ -15,6 +15,8 @@ import HomeScreen from "./screens/HomeScreen";
 import SecondScreen from "./screens/MessageScreen";
 import ThirdScreen from './screens/ThirdScreen';
 import GameScreen from './screens/GameScreen';
+import AsyncStorageTestScreen from './AsyncStorageTest';
+import MazeScreen from './screens/MazeScreen';
 
 const firebaseConfig = {
   apiKey: "AIzaSyBYOzPvrmtMrCFn4IRcZC02PAzSKy_R5b4",
@@ -75,10 +77,12 @@ export default function App() {
         },
       })}
     >
-      <Tab.Screen name="Game" component={GameScreen} />
-      <Tab.Screen name="Weather" component={ThirdScreen} />
+      <Tab.Screen name="Game" component={GameScreen} />  
+   {/*   <Tab.Screen name="Game" component={MazeScreen} />  */}
+   {/*   <Tab.Screen name="Weather" component={ThirdScreen} />  */}
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="Messages" component={SecondScreen} />
+      <Tab.Screen name="Async" component={AsyncStorageTestScreen} />  
       </Tab.Navigator>
     </NavigationContainer>
   );

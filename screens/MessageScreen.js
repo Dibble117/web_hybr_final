@@ -32,6 +32,8 @@ export default function SecondScreen({ navigation }) {
       }
     });
 
+    convertFirebaseTimeStampToJS();
+
     BackHandler.addEventListener("hardwareBackPress", close);
 
     return () => {

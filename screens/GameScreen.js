@@ -1,15 +1,17 @@
 import React, { Component, useState, useEffect } from 'react';
 import { Accelerometer } from 'expo-sensors';
-import { Alert, StyleSheet, View, Dimensions, DeviceEventEmitter, Text, BackHandler, TouchableOpacity } from 'react-native';
+import { Alert, StyleSheet, View, Dimensions, DeviceEventEmitter, Text, BackHandler, TouchableOpacity, Modal, FlatList } from 'react-native';
 import { NavigationEvents } from 'react-navigation';
-import { AsyncStorage } from '@react-native-async-storage/async-storage';
+import  AsyncStorage  from '@react-native-async-storage/async-storage';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const blockSize = 30; // Size of each maze cell in pixels
 const timerHeight = 80; // Height of the timer bar in pixels
 const numCols = Math.floor(screenWidth / blockSize); // Number of columns
 const numRows = Math.floor((screenHeight - timerHeight) / blockSize); // Number of rows
-const gridWidth = numCols * blockSize;
+const gridWidth = numCols * blockSize; // Width of the maze grid in pixels
+
+//const STORAGE_KEY = `gameTime_${new Date().getTime()}`; // Unique key
 
 class MazeScreen extends Component {
     constructor() {
@@ -34,16 +36,138 @@ class MazeScreen extends Component {
         deadEndWhiteBlock: deadEndWhiteBlock,
         gameInProgress: false, // Add this line
         gameCompleted: false, // Add this line
+        savedGameTimes: [], // Add this line
+        values: [], // Initialize values as an empty array
+        showSavedGameTimes: false, // Add this line
       };
       this.accelerometerData = { x: 0, y: 0 };
     }
+/*
+    saveGameTime = async (formattedTimer) => {
+      try {
+        // Retrieve the current savedGameTimes from state
+        const { savedGameTimes } = this.state;
+
+        // Add the new time to the array
+        savedGameTimes.push(formattedTimer);
+
+        // Save the updated array in AsyncStorage
+        await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(savedGameTimes));
+
+        // Update the state with the new savedGameTimes array
+        this.setState({ savedGameTimes });
+
+        console.log('Game time saved successfully:', formattedTimer);
+      } catch (error) {
+        console.error('Error saving game time:', error);
+      }
+    };
+*/
+                   // TÄMÄ
+saveGameTime = async (formattedTimer) => {
+  try {
+ //   const key = `gameTime_${new Date().getTime()}`;
+    const gameData = await AsyncStorage.getItem('gameData');
+    let gameDataArray = gameData ? JSON.parse(gameData) : [];
+    const gameNumber = gameDataArray.length + 1;
+    const gameDataItem = { gameNumber, formattedTimer };
+    gameDataArray.push(gameDataItem);
+
+    // Save the game data array in AsyncStorage
+    await AsyncStorage.setItem('gameData', JSON.stringify(gameDataArray));
+
+    console.log('GAME TIME SAVED SUCCESSFULLY:', formattedTimer);
+  } catch (error) {
+    console.error('Error saving game time:', error);
+  }
+};
+
+/*
+    retrieveGameTimes = async () => {
+      try {
+        const savedGameTimesString = await AsyncStorage.getItem(STORAGE_KEY);
+        if (savedGameTimesString !== null) {
+          const savedGameTimes = JSON.parse(savedGameTimesString);
+          this.setState({ savedGameTimes });
+        }
+        console.log('Game times retrieved successfully:', savedGameTimesString);
+      } catch (error) {
+        console.error('Error retrieving game times:', error);
+      }
+    };
+*/
+                  // TÄMÄ
+retrieveGameTimes = async () => {
+  try {
+    const gameData = await AsyncStorage.getItem('gameData');
+    const gameDataArray = gameData ? JSON.parse(gameData) : [];
+    console.log('GAME TIMES RETRIEVED SUCCESSFULLY:', gameDataArray);
+
+    this.setState({ values: gameDataArray });
+  } catch (error) {
+    console.error('Error retrieving game times:', error);
+  }
+};
+
+                //  TÄMÄ
+renderSavedGameTimes = () => {
+  const { values } = this.state; // Use values from the state
+//  const gameNumber = values.length + 1; // Calculate game number based on the length of values
+
+  return (
+    <View style={styles.savedGameTimesContainer}>
+      <Text style={styles.savedGameTimesHeader}>Your Game Times:</Text>
+      {values.length > 0 && (
+      <FlatList
+        style={styles.list}
+        data={values}
+        keyExtractor={(item, index) => index.toString()}
+        renderItem={({ item, index }) => (
+          <Text>{`Game ${item.gameNumber}: ${item.formattedTimer}`}</Text>
+        )}
+      />
+      )}
+      <TouchableOpacity
+        style={styles.closeModalButton}
+        onPress={() => this.setState({ showSavedGameTimes: false })}
+      >
+        <Text style={styles.closeModalButtonText}>Close</Text>
+      </TouchableOpacity>
+    </View>
+  );
+};
+
+
+/*
+    // Function to render saved game times
+  renderSavedGameTimes = () => {
+    return (
+      <View style={styles.savedGameTimesContainer}>
+        <Text style={styles.savedGameTimesHeader}>Your Game Times:</Text>
+        <FlatList
+          style={styles.list}
+          data={this.state.savedGameTimes}
+          keyExtractor={(item, index) => index.toString()}
+          renderItem={({ item }) => <Text>{item}</Text>}
+        />
+        <TouchableOpacity
+          style={styles.closeModalButton}
+          onPress={() => this.setState({ showSavedGameTimes: false })}
+        >
+          <Text style={styles.closeModalButtonText}>Close</Text>
+        </TouchableOpacity>
+      </View>
+    );
     
+  };
+*/
+
     componentDidMount() {
       // Add the BackHandler event listener here
   //    this.backHandler = BackHandler.addEventListener('hardwareBackPress', this.handleBackPress);
+      this.retrieveGameTimes();
     }
-    
-    
+
       componentWillUnmount() {
         // Stop listening to accelerometer events
     //    this.accelerometerSubscription.remove();
@@ -100,7 +224,7 @@ class MazeScreen extends Component {
               ballSpeedX: 0,
               ballSpeedY: 0,
             });
-            
+              this.retrieveGameTimes();
               this.accelerometerSubscription = Accelerometer.addListener(this.handleAccelerometerData);
               this.animationFrameId = requestAnimationFrame(this.updateGame);
               this.backHandler = BackHandler.addEventListener('hardwareBackPress', this.handleBackPress);
@@ -213,7 +337,7 @@ updateGame = () => {
     gameInProgress,
     ballSpeedX,
     ballSpeedY,
-    formattedTimer,
+    formattedTimer
   } = this.state;
 
   // Check if the game is already completed or not in progress
@@ -270,7 +394,8 @@ updateGame = () => {
         text: 'OK',
         onPress: () => {
           // Handle the alert OK button press
-          this.saveGameTime(formattedTimer);
+          this.saveGameTime(this.state.formattedTimer);
+       //   this.retrieveGameTimes();
         },
       },
     ],
@@ -285,16 +410,6 @@ updateGame = () => {
   // Request the next animation frame
   this.animationFrameId = requestAnimationFrame(this.updateGame);
 };
-
-// Function to save the game time
-saveGameTime = async (time) => {
-  try {
-    await AsyncStorage.setItem('gameTime', time.toString());
-  } catch (error) {
-    console.error('Error saving game time:', error);
-  }
-};
-
 
   generateMaze(rows, cols) {
     // Create an empty maze grid filled with walls
@@ -401,7 +516,7 @@ saveGameTime = async (time) => {
   }
 
   render() {
-    const { maze, ballPosition, gameInProgress, formattedTimer } = this.state;
+    const { maze, ballPosition, gameInProgress, formattedTimer, savedGameTimes, showSavedGameTimes } = this.state;
 
     return (
       <View style={styles.container}>
@@ -443,16 +558,37 @@ saveGameTime = async (time) => {
           <Text style={styles.timerText}>Time: {formattedTimer}</Text>
         
       ) : (
-        <View style={styles.startButtonContainer}>
-          <TouchableOpacity
-          style={styles.startButton}
-          onPress={this.showAlert}
-
-          >
-        <Text style={styles.startButtonText}>Start Game</Text>
-          </TouchableOpacity>
-        </View>
+        <View style={styles.buttonContainer}>
+              <TouchableOpacity
+                style={styles.savedGameTimesButton}
+                onPress={() => this.setState({ showSavedGameTimes: true })}
+              >
+                <Text style={styles.savedGameTimesButtonText}>Show Times</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.startButton}
+                onPress={this.showAlert}
+              >
+                <Text style={styles.startButtonText}>Start Game</Text>
+              </TouchableOpacity>
+            </View>
       )}
+
+      {/* Use Modal to display saved game times */}
+          <Modal
+            animationType="slide"
+            transparent={true}
+            visible={showSavedGameTimes}
+            onRequestClose={() => { this.setState({ showSavedGameTimes: false }); }}
+          >
+            <View style={styles.modalContainer}>
+            
+              <View style={styles.modalContent}>
+                
+                {this.renderSavedGameTimes()}
+              </View>
+            </View>
+          </Modal>
     </View>
     </View>
     );
@@ -467,56 +603,114 @@ function close() {
   BackHandler.addEventListener("hardwareBackPress", close);
 */
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
+  container: {
+      flex: 1,
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    grid: {
+      width: gridWidth,
+      flexDirection: 'column', // Adjust this to your layout needs
       },
-      grid: {
-        width: gridWidth,
-        flexDirection: 'column', // Adjust this to your layout needs
-        },
-      row: {
-        flexDirection: 'row',
-      },
-      cell: {
-        width: blockSize,
-        height: blockSize,
-        borderWidth: 1,
-        borderColor: 'gray',
-      },
-      ball: {
-        position: 'absolute',
-        width: 20, // Ball size
-        height: 20, // Ball size
-        backgroundColor: 'red', // Ball color
-        borderRadius: 20, // Make it round
-      },
-      timerContainer: {
-        position: 'absolute',
-        bottom: 10, // Adjust the position as needed
-      },
-      timerText: {
-        fontSize: 30,
-        color: 'white',
-        fontWeight: 'bold',
-      },
-      finishLine: {
-        backgroundColor: 'green', // Change this to 'green' to make the finish line green
-        borderColor: 'red', // Add a red border to the finish line cell
-        borderWidth: 2, // Adjust the border width as needed
-      },
-      startButton: {
-        backgroundColor: 'blue', // Background color of the button
-        padding: 10, // Padding around the button text
-        borderRadius: 8, // Border radius to make it rounded
-      },
-      startButtonText: {
-        color: 'white', // Text color of the button
-        fontSize: 18, // Font size of the button text
-        fontWeight: 'bold', // Font weight of the button text
-      },
+    row: {
+      flexDirection: 'row',
+    },
+    cell: {
+      width: blockSize,
+      height: blockSize,
+      borderWidth: 1,
+      borderColor: 'gray',
+    },
+    ball: {
+      position: 'absolute',
+      width: 20, // Ball size
+      height: 20, // Ball size
+      backgroundColor: 'red', // Ball color
+      borderRadius: 20, // Make it round
+    },
+    timerContainer: {
+      position: 'absolute',
+      bottom: 10, // Adjust the position as needed
+    },
+    timerText: {
+      fontSize: 30,
+      color: 'white',
+      fontWeight: 'bold',
+    },
+    finishLine: {
+      backgroundColor: 'green', // Change this to 'green' to make the finish line green
+      borderColor: 'red', // Add a red border to the finish line cell
+      borderWidth: 2, // Adjust the border width as needed
+    },
+    startButton: {
+      backgroundColor: 'green', // Background color of the button
+      padding: 10, // Padding around the button text
+      borderRadius: 8, // Border radius to make it rounded
+      alignSelf: 'center', // Align to center of screen
+    },
+    startButtonText: {
+      color: 'white', // Text color of the button
+      fontSize: 18, // Font size of the button text
+      fontWeight: 'bold', // Font weight of the button text
+    },
+    savedGameTimesContainer: {
+      backgroundColor: 'lightgray',
+      marginTop: 20,
+      marginLeft: 10,
+    },
+    savedGameTimesHeader: {
+      color: 'black',
+      fontSize: 20,
+      fontWeight: 'bold',
+      marginBottom: 10,
+    },
+    savedGameTime: {
+      backgroundColor: 'lightgray',
+      fontSize: 16,
+      marginBottom: 5,
+    },
+    savedGameTimesButton: {
+      backgroundColor: 'blue', // Background color of the button
+      padding: 10, // Padding around the button text
+      borderRadius: 8, // Border radius to make it rounded
+      marginRight: 10, // Adjust the margin as needed
+      alignSelf: 'center', // Align to center of screen
+    },
+    savedGameTimesButtonText: {
+      color: 'white', // Text color of the button
+      fontSize: 18, // Font size of the button text
+      fontWeight: 'bold', // Font weight of the button text
+    },
+    modalContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: 'rgba(0, 0, 0, 0.5)', // Semi-transparent background
+    },
+    modalContent: {
+      backgroundColor: 'white',
+      padding: 20,
+      borderRadius: 10,
+      width: '80%',
+    },
+    closeModalButton: {
+      backgroundColor: 'red',
+      padding: 10,
+      borderRadius: 8,
+      alignSelf: 'center',
+      marginTop: 10,
+    },
+    closeModalButtonText: {
+      color: 'white',
+      fontSize: 18,
+      fontWeight: 'bold',
+    },
+    buttonContainer: {
+      flexDirection: 'row', // Display buttons in a row
+      justifyContent: 'space-between', // Space evenly between buttons
+      alignItems: 'center', // Center vertically
+    },
 });
 
 export default MazeScreen;
