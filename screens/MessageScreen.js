@@ -12,7 +12,7 @@ export default function SecondScreen({ navigation }) {
 
   useEffect(() => {
     const db = getFirestore();
-    const q = query(collection(db, 'messages'), orderBy('created', 'desc'));
+    const q = query(collection(db, 'messages2'), orderBy('created', 'desc'));
 
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       try {
@@ -54,7 +54,7 @@ export default function SecondScreen({ navigation }) {
         text: newMessage,
         created: new Date(),
       };
-      await addDoc(collection(db, 'messages'), newMessageObject);
+      await addDoc(collection(db, 'messages2'), newMessageObject);
       setNewMessage(''); // Clear the input field
     } catch (error) {
       console.error('Error sending message:', error);
@@ -73,7 +73,7 @@ export default function SecondScreen({ navigation }) {
         renderItem={({ item }) => (
           <View style={styles.messageContainer}>
             <Text style={styles.messageText}>Message from {item.name}:</Text>
-            <Text>{item.text}</Text>
+            <Text style={styles.message}>{item.text}</Text>
             <Text></Text>
             <Text style={styles.messageInfo}>{item.created}</Text>
           </View>
@@ -111,8 +111,11 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     borderRadius: 8,
   },
+  message: {
+    fontSize: 18,
+  },
   messageText: {
-    fontSize: 16,
+    fontSize: 14,
   },
   input: {
     borderWidth: 1,

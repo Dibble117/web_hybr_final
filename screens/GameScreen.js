@@ -421,10 +421,10 @@ updateGame = () => {
   this.animationFrameId = requestAnimationFrame(this.updateGame);
 };
 
-  generateMaze(rows, cols) {
+  generateMaze(numRows, numCols) {
     // Create an empty maze grid filled with walls
-    const maze = Array.from({ length: rows }, () =>
-      Array.from({ length: cols }, () => true)
+    const maze = Array.from({ length: numRows }, () =>
+      Array.from({ length: numCols }, () => true)
     );
   
     // Initialize starting position and stack
@@ -441,7 +441,7 @@ updateGame = () => {
       const neighbors = this.getNeighbors(x, y);
       const unvisitedNeighbors = neighbors.filter(
         ({ x, y }) =>
-          x > 0 && x < cols - 1 && y > 0 && y < rows - 1 && maze[y][x]
+          x > 0 && x < numCols - 1 && y > 0 && y < numRows - 1 && maze[y][x]
       );
   
       if (unvisitedNeighbors.length === 0) {
@@ -465,8 +465,8 @@ updateGame = () => {
     let finishLine;
     do {
       finishLine = {
-        x: Math.floor(Math.random() * (cols - 4)) + 2,
-        y: Math.floor(Math.random() * (rows - 4)) + 2,
+        x: Math.floor(Math.random() * (numCols - 4)) + 2,
+        y: Math.floor(Math.random() * (numRows - 4)) + 2,
       };
     } while (!maze[finishLine.y][finishLine.x]);
   
