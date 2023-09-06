@@ -70,6 +70,7 @@ class AsyncStorageTestScreen extends Component {
   constructor() {
     super();
     this.state = {
+      formattedTimer: '00:00',
       values: [], // Initialize values as an empty array
     };
   }
@@ -84,19 +85,19 @@ class AsyncStorageTestScreen extends Component {
     }
   };
 */
-  saveGameTime = async (time) => {
+  saveGameTime = async (formattedTimer) => {
     try {
   //    const key = `gameTime_${new Date().getTime()}`;
       const gameData = await AsyncStorage.getItem('gameData');
       let gameDataArray = gameData ? JSON.parse(gameData) : [];
       const gameNumber = gameDataArray.length + 1;
-      const gameDataItem = { gameNumber, time };
+      const gameDataItem = { gameNumber, formattedTimer };
       gameDataArray.push(gameDataItem);
   
       // Save the game data array in AsyncStorage
       await AsyncStorage.setItem('gameData', JSON.stringify(gameDataArray));
   
-      console.log('Game time saved successfully:', time);
+      console.log('Game time saved successfully:', formattedTimer);
     } catch (error) {
       console.error('Error saving game time:', error);
     }
@@ -122,7 +123,7 @@ class AsyncStorageTestScreen extends Component {
     return (
       <View>
         <Text>AsyncStorage Test Screen</Text>
-        <Button title="Save Game Time" onPress={() => this.saveGameTime(999)} />
+        <Button title="Save Game Time" onPress={() => this.saveGameTime(666)} />
         <Button title="Get Game Time" onPress={() => this.getGameTime()} />
         <Button title="Clear Game Times" onPress={() => AsyncStorage.clear()} />
         {values.length > 0 && (
@@ -130,7 +131,7 @@ class AsyncStorageTestScreen extends Component {
             data={values}
             keyExtractor={(item, index) => index.toString()}
             renderItem={({ item, index }) => (
-              <Text>{`Game ${item.gameNumber}: ${item.time}`}</Text>
+              <Text>{`Game ${item.gameNumber}: ${item.formattedTimer}`}</Text>
             )}
           />
         )}

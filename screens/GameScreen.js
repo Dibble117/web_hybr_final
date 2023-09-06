@@ -235,7 +235,7 @@ renderSavedGameTimes = () => {
               this.accelerometerSubscription = Accelerometer.addListener(this.handleAccelerometerData);
               this.animationFrameId = requestAnimationFrame(this.updateGame);
               this.backHandler = BackHandler.addEventListener('hardwareBackPress', this.handleBackPress);
-            
+
           },
         },
       ],
