@@ -1,8 +1,7 @@
-import React, { Component, useState, useEffect } from 'react';
+import React, { Component } from 'react';
 import { Accelerometer } from 'expo-sensors';
-import { Alert, StyleSheet, View, Dimensions, DeviceEventEmitter, Text, BackHandler, TouchableOpacity, Modal, FlatList } from 'react-native';
-import { NavigationEvents } from 'react-navigation';
-import { withNavigation } from 'react-navigation';
+import { Alert, StyleSheet, View, Dimensions, Text, BackHandler, TouchableOpacity, Modal, FlatList } from 'react-native';
+
 import  AsyncStorage  from '@react-native-async-storage/async-storage';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
@@ -11,8 +10,6 @@ const timerHeight = 80; // Height of the timer bar in pixels
 const numCols = Math.floor(screenWidth / blockSize); // Number of columns
 const numRows = Math.floor((screenHeight - timerHeight) / blockSize); // Number of rows
 const gridWidth = numCols * blockSize; // Width of the maze grid in pixels
-
-//const STORAGE_KEY = `gameTime_${new Date().getTime()}`; // Unique key
 
 class MazeScreen extends Component {
     constructor() {
@@ -43,45 +40,16 @@ class MazeScreen extends Component {
       };
       this.accelerometerData = { x: 0, y: 0 };
     }
-/*
-    reloadGameScreen = () => {
-      // Navigate back to the GameScreen (replace 'GameScreen' with your screen name)
-      this.props.navigation.navigate('Game');
-    };
-*/
-/*
-    saveGameTime = async (formattedTimer) => {
-      try {
-        // Retrieve the current savedGameTimes from state
-        const { savedGameTimes } = this.state;
 
-        // Add the new time to the array
-        savedGameTimes.push(formattedTimer);
-
-        // Save the updated array in AsyncStorage
-        await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(savedGameTimes));
-
-        // Update the state with the new savedGameTimes array
-        this.setState({ savedGameTimes });
-
-        console.log('Game time saved successfully:', formattedTimer);
-      } catch (error) {
-        console.error('Error saving game time:', error);
-      }
-    };
-*/
-                   // TÄMÄ
 saveGameTime = async (formattedTimer) => {
   try {
- //   const key = `gameTime_${new Date().getTime()}`;
     const gameData = await AsyncStorage.getItem('gameData');
     let gameDataArray = gameData ? JSON.parse(gameData) : [];
     const gameNumber = gameDataArray.length + 1;
     const gameDataItem = { gameNumber, formattedTimer };
     gameDataArray.push(gameDataItem);
 
-    // Save the game data array in AsyncStorage
-    await AsyncStorage.setItem('gameData', JSON.stringify(gameDataArray));
+    await AsyncStorage.setItem('gameData', JSON.stringify(gameDataArray)); // Save the game data array in AsyncStorage
 
     console.log('GAME TIME SAVED SUCCESSFULLY:', formattedTimer);
   } catch (error) {
@@ -89,24 +57,9 @@ saveGameTime = async (formattedTimer) => {
   }
 };
 
-/*
-    retrieveGameTimes = async () => {
-      try {
-        const savedGameTimesString = await AsyncStorage.getItem(STORAGE_KEY);
-        if (savedGameTimesString !== null) {
-          const savedGameTimes = JSON.parse(savedGameTimesString);
-          this.setState({ savedGameTimes });
-        }
-        console.log('Game times retrieved successfully:', savedGameTimesString);
-      } catch (error) {
-        console.error('Error retrieving game times:', error);
-      }
-    };
-*/
-                  // TÄMÄ
 retrieveGameTimes = async () => {
   try {
-    const gameData = await AsyncStorage.getItem('gameData');
+    const gameData = await AsyncStorage.getItem('gameData'); // Retrieve the game data array from AsyncStorage
     const gameDataArray = gameData ? JSON.parse(gameData) : [];
     console.log('GAME TIMES RETRIEVED SUCCESSFULLY:', gameDataArray);
 
@@ -116,11 +69,8 @@ retrieveGameTimes = async () => {
   }
 };
 
-                //  TÄMÄ
 renderSavedGameTimes = () => {
-  const { values } = this.state; // Use values from the state
-//  const gameNumber = values.length + 1; // Calculate game number based on the length of values
-
+  const { values } = this.state;
   return (
     <View style={styles.savedGameTimesContainer}>
       <Text style={styles.savedGameTimesHeader}>Your Game Times:</Text>
@@ -144,47 +94,14 @@ renderSavedGameTimes = () => {
   );
 };
 
-
-/*
-    // Function to render saved game times
-  renderSavedGameTimes = () => {
-    return (
-      <View style={styles.savedGameTimesContainer}>
-        <Text style={styles.savedGameTimesHeader}>Your Game Times:</Text>
-        <FlatList
-          style={styles.list}
-          data={this.state.savedGameTimes}
-          keyExtractor={(item, index) => index.toString()}
-          renderItem={({ item }) => <Text>{item}</Text>}
-        />
-        <TouchableOpacity
-          style={styles.closeModalButton}
-          onPress={() => this.setState({ showSavedGameTimes: false })}
-        >
-          <Text style={styles.closeModalButtonText}>Close</Text>
-        </TouchableOpacity>
-      </View>
-    );
-    
-  };
-*/
-
     componentDidMount() {
-      // Add the BackHandler event listener here
-  //    this.backHandler = BackHandler.addEventListener('hardwareBackPress', this.handleBackPress);
-      this.retrieveGameTimes();
+      this.retrieveGameTimes(); // Retrieve the saved game times
     }
 
       componentWillUnmount() {
-        // Stop listening to accelerometer events
-    //    this.accelerometerSubscription.remove();
-        // Stop the timer
-    //    clearInterval(this.timerInterval);
-    //    cancelAnimationFrame(this.animationFrameId);
-    //    this.backHandler.remove();
       }
 
-      // Handle back button press
+  // Handle back button press
   handleBackPress = () => {
     Alert.alert(
       'Exit Game',
@@ -212,7 +129,7 @@ renderSavedGameTimes = () => {
     return true; // Prevent default behavior (exit the app)
   };
 
-      // Show an alert with an OK button
+  // Show an alert with an OK button
   showAlert = () => {
     Alert.alert(
       'Game Start',
@@ -245,8 +162,8 @@ renderSavedGameTimes = () => {
 
   checkCollision(newX, newY) {
     const { maze } = this.state;
-    const ballRadius = 5; // Radius of the ball (half of its width)
-  
+    const ballRadius = 5; // Radius of the ball in pixels
+
     const ballLeft = newX - ballRadius - 5;
     const ballRight = newX + ballRadius + 3;
     const ballTop = newY - ballRadius + 3;
@@ -256,7 +173,7 @@ renderSavedGameTimes = () => {
     const cellXRight = Math.floor(ballRight / blockSize);
     const cellYTop = Math.floor(ballTop / blockSize);
     const cellYBottom = Math.floor(ballBottom / blockSize);
-  
+
     // Check for collision with adjacent maze cells
     for (let y = cellYTop; y <= cellYBottom; y++) {
       for (let x = cellXLeft; x <= cellXRight; x++) {
@@ -266,7 +183,6 @@ renderSavedGameTimes = () => {
         }
       }
     }
-  
     return false; // No collision
   }
 
@@ -285,15 +201,14 @@ renderSavedGameTimes = () => {
     return { x: 0, y: 0 };
   }
 
-    // Handle accelerometer data to move the ball
-handleAccelerometerData = (data) => {
-  const { ballPosition, gameInProgress } = this.state;
-  const { x, y } = data;
+  // Handle accelerometer data to move the ball
+  handleAccelerometerData = (data) => {
+    const { ballPosition, gameInProgress } = this.state;
+    const { x, y } = data;
 
   if (gameInProgress) {
     // Adjust the sensitivity factor as needed
-    const sensitivityFactor = 20; // You can fine-tune this value
-
+    const sensitivityFactor = 20; // You can adjust this value
 
     if (Math.abs(x) < 10 && Math.abs(y) < 10) {
     // Calculate the change in position based on accelerometer data
@@ -322,30 +237,29 @@ handleAccelerometerData = (data) => {
   }
   };
 
-      // Update the timer
-updateTimer = () => {
-  const { timer } = this.state;
-  const minutes = Math.floor(timer / 60); // Calculate minutes
-  const seconds = timer % 60; // Calculate seconds
+  // Update the timer
+  updateTimer = () => {
+    const { timer } = this.state;
+    const minutes = Math.floor(timer / 60); // Calculate minutes
+    const seconds = timer % 60; // Calculate seconds
 
   // Format the timer value as "MM:SS"
   const formattedTimer = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 
   this.setState({ timer: timer + 1, formattedTimer }); // Update the formatted timer
-};
+  };
 
   // Update the game state
-updateGame = () => {
-  const {
-    ballPosition,
-    finishLine,
-    timer,
-    gameCompleted,
-    gameInProgress,
-    ballSpeedX,
-    ballSpeedY,
-    formattedTimer
-  } = this.state;
+  updateGame = () => {
+    const {
+      ballPosition,
+      finishLine,
+      timer,
+      gameCompleted,
+      gameInProgress,
+      ballSpeedX,
+      ballSpeedY,
+    } = this.state;
 
   // Check if the game is already completed or not in progress
   if (gameCompleted || !gameInProgress) {
@@ -383,16 +297,16 @@ updateGame = () => {
     this.saveGameTime(this.state.formattedTimer);
 
     // Calculate minutes and seconds
-  const minutes = Math.floor(timer / 60);
-  const seconds = (timer % 60) - 1;
+    const minutes = Math.floor(timer / 60);
+    const seconds = (timer % 60) - 1;
 
-  let message = `You completed the maze in `;
-  if (minutes > 0) {
-    message += `${minutes} ${minutes === 1 ? 'minute' : 'minutes'}`;
-  }
-  if (seconds > 0) {
-    message += `${minutes > 0 ? ' and ' : ''}${seconds} ${seconds === 1 ? 'second' : 'seconds'}`;
-  }
+    let message = `You completed the maze in `;
+    if (minutes > 0) {
+      message += `${minutes} ${minutes === 1 ? 'minute' : 'minutes'}`;
+    }
+    if (seconds > 0) {
+      message += `${minutes > 0 ? ' and ' : ''}${seconds} ${seconds === 1 ? 'second' : 'seconds'}`;
+    }
 
   Alert.alert(
     'Congratulations!',
@@ -401,11 +315,7 @@ updateGame = () => {
       {
         text: 'OK',
         onPress: () => {
-          // Handle the alert OK button press
-       //   this.saveGameTime(this.state.formattedTimer);
           this.retrieveGameTimes();
-        //  this.props.navigation.navigate('Game'); // Call the function to reload GameScreen
-        //  this.retrieveGameTimes();
         },
       },
     ],
@@ -426,41 +336,41 @@ updateGame = () => {
     const maze = Array.from({ length: numRows }, () =>
       Array.from({ length: numCols }, () => true)
     );
-  
+
     // Initialize starting position and stack
     const stack = [];
     const startX = 1;
     const startY = 2;
     stack.push({ x: startX, y: startY });
-  
+
     while (stack.length > 0) {
       const current = stack[stack.length - 1];
       const { x, y } = current;
       maze[y][x] = false; // Mark the current cell as open
-  
+
       const neighbors = this.getNeighbors(x, y);
       const unvisitedNeighbors = neighbors.filter(
         ({ x, y }) =>
           x > 0 && x < numCols - 1 && y > 0 && y < numRows - 1 && maze[y][x]
       );
-  
+
       if (unvisitedNeighbors.length === 0) {
         stack.pop(); // Backtrack if no unvisited neighbors
       } else {
         // Choose a random unvisited neighbor
         const randomNeighbor =
           unvisitedNeighbors[Math.floor(Math.random() * unvisitedNeighbors.length)];
-  
+
         // Remove the wall between the current cell and the chosen neighbor
         const { x: nx, y: ny } = randomNeighbor;
         const wallX = x + (nx - x) / 2;
         const wallY = y + (ny - y) / 2;
         maze[wallY][wallX] = false;
-  
+
         stack.push(randomNeighbor); // Move to the chosen neighbor
       }
     }
-  
+
     // Ensure that the finish line is not too close to walls
     let finishLine;
     do {
@@ -469,13 +379,12 @@ updateGame = () => {
         y: Math.floor(Math.random() * (numRows - 4)) + 2,
       };
     } while (!maze[finishLine.y][finishLine.x]);
-  
+
     return maze;
   }
-  
 
+  // Get neighboring cells of a given cell
   getNeighbors(x, y) {
-    // Get neighboring cells of a given cell
     return [
       { x: x - 2, y },
       { x: x + 2, y },
@@ -488,7 +397,7 @@ updateGame = () => {
     let farthestX = 0;
     let farthestY = 0;
     let maxDistance = 0;
-  
+
     for (let y = 0; y < numRows; y++) {
       for (let x = 0; x < numCols; x++) {
         if (!maze[y][x]) {
@@ -503,7 +412,6 @@ updateGame = () => {
         }
       }
     }
-  
     return { x: farthestX, y: farthestY };
   }
 
@@ -526,7 +434,7 @@ updateGame = () => {
   }
 
   render() {
-    const { maze, ballPosition, gameInProgress, formattedTimer, savedGameTimes, showSavedGameTimes } = this.state;
+    const { maze, ballPosition, gameInProgress, formattedTimer, showSavedGameTimes } = this.state;
 
     return (
       <View style={styles.container}>
@@ -566,7 +474,6 @@ updateGame = () => {
 <View style={styles.timerContainer}>
         {gameInProgress ? (
           <Text style={styles.timerText}>Time: {formattedTimer}</Text>
-        
       ) : (
         <View style={styles.buttonContainer}>
               <TouchableOpacity
@@ -592,9 +499,7 @@ updateGame = () => {
             onRequestClose={() => { this.setState({ showSavedGameTimes: false }); }}
           >
             <View style={styles.modalContainer}>
-            
               <View style={styles.modalContent}>
-                
                 {this.renderSavedGameTimes()}
               </View>
             </View>
@@ -604,14 +509,7 @@ updateGame = () => {
     );
   }
 }
-/*
-function close() {
-    navigation.navigate('Home');
-    return true;
-  }
 
-  BackHandler.addEventListener("hardwareBackPress", close);
-*/
 const styles = StyleSheet.create({
   container: {
       flex: 1,
@@ -649,20 +547,20 @@ const styles = StyleSheet.create({
       fontWeight: 'bold',
     },
     finishLine: {
-      backgroundColor: 'green', // Change this to 'green' to make the finish line green
-      borderColor: 'red', // Add a red border to the finish line cell
-      borderWidth: 2, // Adjust the border width as needed
+      backgroundColor: 'green',
+      borderColor: 'red',
+      borderWidth: 2,
     },
     startButton: {
-      backgroundColor: 'green', // Background color of the button
-      padding: 10, // Padding around the button text
-      borderRadius: 8, // Border radius to make it rounded
-      alignSelf: 'center', // Align to center of screen
+      backgroundColor: 'green',
+      padding: 10,
+      borderRadius: 8,
+      alignSelf: 'center',
     },
     startButtonText: {
-      color: 'white', // Text color of the button
-      fontSize: 18, // Font size of the button text
-      fontWeight: 'bold', // Font weight of the button text
+      color: 'white',
+      fontSize: 18,
+      fontWeight: 'bold',
     },
     savedGameTimesContainer: {
       backgroundColor: 'lightgray',
@@ -681,16 +579,16 @@ const styles = StyleSheet.create({
       marginBottom: 5,
     },
     savedGameTimesButton: {
-      backgroundColor: 'blue', // Background color of the button
-      padding: 10, // Padding around the button text
-      borderRadius: 8, // Border radius to make it rounded
-      marginRight: 10, // Adjust the margin as needed
-      alignSelf: 'center', // Align to center of screen
+      backgroundColor: 'blue',
+      padding: 10,
+      borderRadius: 8,
+      marginRight: 10,
+      alignSelf: 'center',
     },
     savedGameTimesButtonText: {
-      color: 'white', // Text color of the button
-      fontSize: 18, // Font size of the button text
-      fontWeight: 'bold', // Font weight of the button text
+      color: 'white',
+      fontSize: 18,
+      fontWeight: 'bold',
     },
     modalContainer: {
       flex: 1,

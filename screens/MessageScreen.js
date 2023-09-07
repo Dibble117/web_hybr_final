@@ -1,11 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { BackHandler, FlatList, StyleSheet, Text, TextInput, View, TouchableOpacity } from "react-native";
 import { getFirestore, collection, query, onSnapshot, orderBy, addDoc } from 'firebase/firestore';
-import { FontAwesome } from '@expo/vector-icons';
 import { convertFirebaseTimeStampToJS } from '../helpers/Functions';
-import HomeScreen from "./HomeScreen";
 
-export default function SecondScreen({ navigation }) {
+export default function MessageScreen({ navigation }) {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [senderName, setSenderName] = useState('');
@@ -106,16 +104,18 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   messageContainer: {
-    backgroundColor: "#e0e0e0",
+    backgroundColor: "lightblue",
     padding: 10,
     marginBottom: 10,
     borderRadius: 8,
   },
   message: {
     fontSize: 18,
+    color: "darkblue",
   },
   messageText: {
     fontSize: 14,
+    fontWeight: "bold",
   },
   input: {
     borderWidth: 1,
@@ -136,5 +136,7 @@ const styles = StyleSheet.create({
   },
   messageInfo: {
     fontSize: 12,
+    alignSelf: 'flex-end',
+    color: 'darkblue',
   },
 });
